@@ -76,7 +76,7 @@ pub mod database{
                 .map(|(key, value)| format!("{}:{}", key, value))
                 .collect::<Vec<String>>()
                 .join(",");
-            fs::write(&self.path, format!("{{{}}}", data)).expect("Data Write File");
+            fs::write(&self.path, format!("{{{}}}", data)).expect("DB Write Failed");
             let log:String = self.log.iter()
                 .map(|(act, res)| format!("{:?}:{:?}", act, res))
                 .collect::<Vec<String>>()
@@ -86,5 +86,12 @@ pub mod database{
     }
 }
 fn main(){
-    println!("hi");
+    //std::env::set_var("RUST_BACKTRACE", "1");
+    let path = "/Users/anianand/DB/db1.db";
+    let log_path = "/Users/anianand/DB/db_log_1.log";
+    let mut new_db: database::DB = database::DB::new(path, log_path);
+    let _ = new_db.act(database::Action::Write {key: 10, value: 20});
+    let val: Option<u32> = new_db.act(database::Action::Read {key: 10});
+    new_db.save();
+    println!("{:?}", val.unwrap());
 }
