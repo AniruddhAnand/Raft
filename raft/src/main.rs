@@ -3,24 +3,26 @@ use std::fs;
 use std::collections::HashSet;
 use std::error::Error;
 use tokio::net::{TcpListener, TcpStream};
-use tokio::io::{self, AsyncReadExt, AsyncWriteExt};
+//use tokio::io::{self, AsyncReadExt, AsyncWriteExt};
 use tokio::time::Duration;
-use log::{info, error};
+//use log::{info, error};
 
-//mod raft_node;
-//use raft_node::RaftNode;
+mod raft_node;
+use raft_node::RaftNode;
+mod kv;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    env_logger::init();
+    //env_logger::init();
 
+    //TODO: Grab Client Port -> will figure out this once raft can atleast talk to each other
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
         eprintln!("Usage: {} <port>", args[0]);
         std::process::exit(1);
     }
 
-    let port = match args[1].parse::<u16>() {
+    let port = match args[1].parse::<u32>() {
         Ok(port) => port,
         Err(_) => {
             eprintln!("Invalid port number");
@@ -28,6 +30,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
     };
 
+    //TODO: Custom Server file
     let server_ports: Vec<u32> = fs::read_to_string("servers.txt")
         .expect("Invalid File")
         .lines()
@@ -36,7 +39,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     println!("Server ports read from file: {:?}", server_ports);
 
-    if !server_ports.contains(&(port as u32)) {
+    if !server_ports.contains(&port) {
         eprintln!("Own port {} not found in servers.txt", port);
         std::process::exit(1);
     }
@@ -45,13 +48,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     println!("Server running on 127.0.0.1:{}", port);
 
     let mut connected_servers = HashSet::new();
+    let up_servers = (server_ports.len() + 1)/2;
+    connected_servers.insert(port);
 
-    while connected_servers.len() < 3 {
+    while connected_servers.len() < up_servers {
         for &server_port in &server_ports {
-            // Skip own port
-            if server_port == port as u32 {
-                continue;
-            }
 
             // Attempt to connect to the server
             match TcpStream::connect(format!("127.0.0.1:{}", server_port)).await {
@@ -85,6 +86,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
             eprintln!("Failed to process connection: {}", e);
         }
     });*/
+    loop {
+    }
     Ok(())
 }
 
