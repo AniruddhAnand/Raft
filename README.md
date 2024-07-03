@@ -41,6 +41,18 @@ This code may not be the best ... it goes through revisions all the time and is
 something I want others to look at and learn something from: Whether something I
 did good or smth I did bad.
 
+## Progress
+
+The KV Store works great, saves information and is a super simple
+implementationt that works perfectly for the job
+
+The Servers Can all talk to each other and the Raft Nodes too know how to talk
+to each other
+
+TODO: Well the raft nodes seem to all never want to be the leader. What a great
+sense of modesty I have enabled into these nodes :), but right now i need
+something to take charge. So to the workshop it is
+
 ## Contact
 Please let me know if you have any suggestions. This is my first large scale
 rust project and also the biggest networking projet I have done aswell. Also as

@@ -70,23 +70,32 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
     }
     println!("Server {} Connected", port);
+    // Create the Raft node
+    let raft_node = RaftNode::new(port as u64, port*2, server_ports.iter().map(|&p| p as u64).collect()).await?;
 
-    /*let raft_node = RaftNode::new(port as u64, port, listener);
+    // Clone the Arc<RaftNode> for use in the server loop
+    let raft_node_clone = raft_node.clone();
 
-    if raft_node.start_election(&server_ports, port as u32).await {
-        println!("Server on port {} is the leader", port);
-    } else {
-        println!("Server on port {} is not the leader", port);
-    }
-
-    // Spawn a new task to handle each connection
-    let stream:TcpStream = raft_node.stream().await;
+    // Spawn the Raft node in a separate task
     tokio::spawn(async move {
-        if let Err(e) = raft_node.process(stream).await {
-            eprintln!("Failed to process connection: {}", e);
-        }
-    });*/
+        raft_node.start().await;
+    });
+
+    println!("Server listening on 127.0.0.1:{}", port);
+    let is_leader = raft_node_clone.is_leader().await;
+    if is_leader {
+        // Handle the request as the leader
+        let response = "I am the leader, processing your request...";
+        //socket.write_all(response.as_bytes()).await.unwrap();
+        println!("{} is the leader", port);
+    } else {
+        // Redirect the client to the leader or respond that this node isn't the leader
+        let response = "I am not the leader, please try another node.";
+        //socket.write_all(response.as_bytes()).await.unwrap();
+        println!("{} is not the leader", port);
+    }
     loop {
+
     }
     Ok(())
 }
