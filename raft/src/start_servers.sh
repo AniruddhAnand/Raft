@@ -1,3 +1,5 @@
+#!/bin/bash
+./kill.sh
 cargo run -- 5050 &
 cargo run -- 5051 &
 cargo run -- 5052 &

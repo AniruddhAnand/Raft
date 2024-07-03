@@ -4,17 +4,23 @@ use std::collections::HashSet;
 use std::error::Error;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::io::{self, AsyncReadExt, AsyncWriteExt};
-use std::time::Duration;
+use tokio::time::Duration;
+use log::{info, error};
+
+//mod raft_node;
+//use raft_node::RaftNode;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    env_logger::init();
+
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
         eprintln!("Usage: {} <port>", args[0]);
         std::process::exit(1);
     }
 
-    let port = match args[1].parse::<u32>() {
+    let port = match args[1].parse::<u16>() {
         Ok(port) => port,
         Err(_) => {
             eprintln!("Invalid port number");
@@ -30,7 +36,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     println!("Server ports read from file: {:?}", server_ports);
 
-    if !server_ports.contains(&port) {
+    if !server_ports.contains(&(port as u32)) {
         eprintln!("Own port {} not found in servers.txt", port);
         std::process::exit(1);
     }
@@ -41,9 +47,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut connected_servers = HashSet::new();
 
     while connected_servers.len() < 3 {
-        for server_port in &server_ports {
+        for &server_port in &server_ports {
             // Skip own port
-            if *server_port == port{
+            if server_port == port as u32 {
                 continue;
             }
 
@@ -62,68 +68,23 @@ async fn main() -> Result<(), Box<dyn Error>> {
             tokio::time::sleep(Duration::from_secs(1)).await;
         }
     }
+    println!("Server {} Connected", port);
 
-    // Accept connections in a loop
-    loop {
-        let (stream, addr) = listener.accept().await?;
-        println!("New connection: {}", addr);
+    /*let raft_node = RaftNode::new(port as u64, port, listener);
 
-        // Spawn a new task to handle each connection
-        tokio::spawn(async move {
-            if let Err(e) = process(stream).await {
-                eprintln!("Failed to process connection: {}", e);
-            }
-        });
-    }
-}
-
-async fn process(mut stream: TcpStream) -> io::Result<()> {
-    let mut buf = [0; 1024];
-    let n = stream.read(&mut buf).await?;
-
-    if n == 0 {
-        return Ok(());
+    if raft_node.start_election(&server_ports, port as u32).await {
+        println!("Server on port {} is the leader", port);
+    } else {
+        println!("Server on port {} is not the leader", port);
     }
 
-    let message = String::from_utf8_lossy(&buf[..n]).to_string();
-    let tokens: Vec<String> = message.split_whitespace().map(|s| s.to_string()).collect();
-
-    if tokens.len() < 1 || tokens.len() > 3 {
-        stream.write_all(b"invalid").await?;
-        return Ok(());
-    }
-
-    match tokens[0].as_str() {
-        "R" | "D" => {
-            if tokens.len() != 2 {
-                stream.write_all(b"invalid").await?;
-            } else {
-                if let Ok(value) = tokens[1].parse::<i32>() {
-                    println!("Received {} command with value: {}",tokens[0], value);
-                    stream.write_all(b"command received").await?;
-                } else {
-                    stream.write_all(b"invalid").await?;
-                }
-            }
+    // Spawn a new task to handle each connection
+    let stream:TcpStream = raft_node.stream().await;
+    tokio::spawn(async move {
+        if let Err(e) = raft_node.process(stream).await {
+            eprintln!("Failed to process connection: {}", e);
         }
-        "W" => {
-            if tokens.len() != 3 {
-                stream.write_all(b"invalid").await?;
-            } else {
-                // Handle "W" command
-                if let (Ok(value1), Ok(value2)) = (tokens[1].parse::<i32>(), tokens[2].parse::<i32>()) {
-                    // Do something with value1 and value2
-                    println!("Received W command with values: {} {}", value1, value2);
-                    stream.write_all(b"command received").await?;
-                } else {
-                    stream.write_all(b"invalid").await?;
-                }
-            }
-        }
-        _ => {
-            stream.write_all(b"invalid").await?;
-        }
-    }
-
+    });*/
     Ok(())
 }
+
