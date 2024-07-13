@@ -62,4 +62,4 @@ online papers and videos to figure out anything. I mean its still not finished
 ... my consensus stuff is still a work in progress and I am always deleting and
 restarting when I learn something new. So please contact me with any
 suggestions at:
-aniruddh.anand@utexas.edu
+aniruddh[dot]anand[at]utexas[dot]edu
